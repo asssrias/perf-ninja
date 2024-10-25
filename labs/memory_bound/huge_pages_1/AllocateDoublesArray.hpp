@@ -33,6 +33,9 @@
 #define _UNICODE
 
 #include <windows.h>
+#include <memoryapi.h>
+// #include <windows.h>
+#include <strsafe.h>
 
 #include <Sddl.h>
 #include <ntsecapi.h>
@@ -153,13 +156,61 @@ inline bool setRequiredPrivileges() {
 // std::unique_ptr<double[], D>, where `D` is a custom deleter type
 inline auto allocateDoublesArray(size_t size) {
   // Allocate memory
+#ifdef SOLUTION
+  static int _ = []() -> int {
+    if (setRequiredPrivileges()) {
+      std::clog << "The required privilege has been set successfully. ";
+    } else {
+      std::clog << "Set required privilege failed." << std::endl;
+    }
+    return 0;
+  }();
+  double *alloc = nullptr;
+  auto large_page_minimum_size = GetLargePageMinimum();
+  auto before_aligned_size = size * sizeof(double);
+  // 256000000
+  // 27262976
+  // 257949696
+  auto accurate_size = before_aligned_size + large_page_minimum_size - before_aligned_size % large_page_minimum_size;
+  // std::clog << "size: " << size << std::endl;
+  // std::clog << "accurate_size: " << accurate_size << std::endl;
+  // std::clog << "large_page_minimum_size: " << large_page_minimum_size << std::endl;
+  auto ret = VirtualAlloc(NULL, accurate_size, MEM_COMMIT | MEM_RESERVE | MEM_LARGE_PAGES, PAGE_READWRITE);
+  if (ret == nullptr) {
+    DWORD dw = GetLastError();
+    LPVOID lpMsgBuf;
+    LPVOID lpDisplayBuf;
+    FormatMessage(
+      FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+      FORMAT_MESSAGE_FROM_SYSTEM |
+      FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL,
+      dw,
+      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      (LPTSTR) &lpMsgBuf,
+      0, NULL );
+    lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT, 
+      (lstrlen((LPCTSTR)lpMsgBuf) + 40) * sizeof(TCHAR)); 
+    StringCchPrintf((LPTSTR)lpDisplayBuf, 
+      LocalSize(lpDisplayBuf) / sizeof(TCHAR),
+      TEXT("failed with error %d: %s"), 
+      dw, lpMsgBuf); 
+    MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
+    exit(1);
+  }
+  alloc = (double*)ret;
+  auto deleter = [accurate_size](double *ptr) {
+    VirtualFree(ptr, accurate_size, MEM_RELEASE);
+  };
+#else
   double *alloc = new double[size];
+
   // remember to cast the pointer to double* if your allocator returns void*
 
   // Deleters can be conveniently defined as lambdas, but you can explicitly
   // define a class if you're not comfortable with the syntax
   auto deleter = [/* state = ... */](double *ptr) { delete[] ptr; };
-
+#endif
   return std::unique_ptr<double[], decltype(deleter)>(alloc,
                                                       std::move(deleter));
 
