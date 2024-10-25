@@ -4,11 +4,22 @@
 #include <omp.h>
 #include <vector>
 
+// struct Accumulator1 {
+//   std::atomic<uint32_t> value = 0;
+// };
+// template<int Size> struct TD;
+// TD<sizeof(Accumulator1)> td;
+
 std::size_t solution(const std::vector<uint32_t> &data, int thread_count) {
   // Using std::atomic counters to disallow compiler to promote `target`
   // memory location into a register. This way we ensure that the store
   // to `target` stays inside the loop.
-  struct Accumulator {
+
+#ifdef SOLUTION
+  struct alignas(64) Accumulator {
+#else
+  struct alignas(64) Accumulator {
+#endif // SOLUTION
     std::atomic<uint32_t> value = 0;
   };
   std::vector<Accumulator> accumulators(thread_count);

@@ -1,5 +1,7 @@
 #include <vector>
 #include <limits>
+#include <mmintrin.h>
+#include <xmmintrin.h>
 
 static constexpr std::size_t HASH_MAP_SIZE = 32 * 1024 * 1024 - 5;
 static constexpr std::size_t NUMBER_OF_LOOKUPS = 1024 * 1024;
@@ -23,6 +25,11 @@ public:
     bool find(int val) const {
         int bucket = val % N_Buckets;
         return m_vector[bucket] != UNUSED;
+    }
+
+    void prefetchForVal(int val) const {
+        int bucket = val % N_Buckets;
+        __builtin_prefetch(m_vector.data() + bucket);
     }
 };
 
