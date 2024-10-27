@@ -49,18 +49,21 @@ result_t compute_alignment(std::vector<sequence_t> const &sequences1,
   __m256i simd_match = _mm256_set1_epi16(match);
   __m256i simd_mismatch = _mm256_set1_epi16(mismatch);
 
-  std::array<std::array<score_t, sequence_size_v>, sequence_size_v + 1> simd_score_column{};
-  std::array<std::array<score_t, sequence_size_v>, sequence_size_v + 1> simd_horizontal_gap_column{};
+  std::array<__m256i, sequence_size_v + 1> simd_score_column{};
+  std::array<__m256i, sequence_size_v + 1> simd_horizontal_gap_column{};
   __m256i simd_last_vertical_gap = _mm256_set1_epi16(gap_open);
 
   // Pray that compiler will vectorize this loop.
   for (int i = 0; i < sequence_size_v; ++i) {
-    simd_horizontal_gap_column[i][0] = gap_open;
+    simd_horizontal_gap_column[i] = _mm256_set1_epi16(gap_open);
   }
 
+  simd_horizontal_gap_column[0] = _mm256_set1_epi16(gap_open);
+  last_vertical_gap = gap_open;
+
   for (size_t i = 1; i < score_column.size(); ++i) {
-    score_column[i] = last_vertical_gap;
-    horizontal_gap_column[i] = last_vertical_gap + gap_open;
+    simd_score_column[i] = _mm256_set1_epi16(last_vertical_gap);
+    simd_horizontal_gap_column[i] = _mm256_set1_epi16(last_vertical_gap + gap_open);
     last_vertical_gap += gap_extension;
   }
 
@@ -75,9 +78,19 @@ result_t compute_alignment(std::vector<sequence_t> const &sequences1,
       __m256i simd_best_cell_score = _mm256_adds_epi16(simd_last_diagonal_score, blend_result);
 
       simd_best_cell_score = _mm256_max_epi16(simd_best_cell_score, simd_last_vertical_gap);
-      // simd_best_cell_score = _mm256_max_epi16(simd_best_cell_score, simd_horizontal_gap_column);
-      // best_cell_score = std::max(best_cell_score, last_vertical_gap);
-      // best_cell_score = std::max(best_cell_score, horizontal_gap_column[row]);
+      simd_best_cell_score = _mm256_max_epi16(simd_best_cell_score, simd_horizontal_gap_column[row]);
+      // last_diagonal_score
+      simd_last_diagonal_score = simd_score_column[row];
+      simd_score_column[row] = simd_best_cell_score;
+      simd_best_cell_score = _mm256_add_epi16(simd_best_cell_score, _mm256_set1_epi16(gap_open));
+      simd_last_vertical_gap = _mm256_add_epi16(simd_last_vertical_gap, _mm256_set1_epi16(gap_extension));
+
+      horizontal_gap_column[row] += gap_extension;
+    //     // Store optimum between gap open and gap extension.
+    //     last_vertical_gap = std::max(last_vertical_gap, best_cell_score);
+    //     horizontal_gap_column[row] =
+    //         std::max(horizontal_gap_column[row], best_cell_score);
+    //   }
     }
 
     // for (unsigned row = 1; row <= sequence1.size(); ++row) {
