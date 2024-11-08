@@ -2,7 +2,11 @@
 #include <cstdint>
 #include <vector>
 
+#ifdef SOLUTION
+using InputVector = std::vector<uint16_t>;
+#else
 using InputVector = std::vector<uint8_t>;
+#endif
 using OutputVector = std::vector<uint16_t>;
 constexpr uint8_t radius = 13; // assume diameter (2 * radius + 1) to be less
                                // than 256 so results fits in uint16_t
