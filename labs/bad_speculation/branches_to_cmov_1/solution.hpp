@@ -1,6 +1,6 @@
 #include <vector>
 #include <iostream>
-
+#define SOLUTION
 constexpr int NumberOfGrids = 16;
 constexpr int GridXDimension = 1024;
 constexpr int GridYDimension = 1024;
@@ -37,7 +37,46 @@ public:
         std::cout << "\n";
     }    
 
-    // Simulate the next generation of life
+#ifdef SOLUTION
+    void simulateNext() {
+        int M = current.size();
+        int N = current[0].size();
+
+        for(int i = 1; i < M - 1; i++) {
+            for(int j = 1; j < N - 1; j++) {
+                int aliveNeighbours = 0;
+                for(int p = -1; p <= 1; p++) {              // row-offet (-1,0,1)
+                    for(int q = -1; q <= 1; q++) {
+                        aliveNeighbours += current[i + p][j + q];
+                    }
+                }
+
+                aliveNeighbours -= current[i][j];
+
+                // Implementing the Rules of Life:
+                switch(aliveNeighbours) {
+                    // 1. Cell is lonely and dies
+                    case 0:
+                    case 1:
+                        future[i][j] = 0;
+                        break;                   
+                    // 2. Remains the same
+                    case 2:
+                        future[i][j] = current[i][j];
+                        break;
+                    // 3. A new cell is born
+                    case 3:
+                        future[i][j] = 1;
+                        break;
+                    // 4. Cell dies due to over population
+                    default:
+                        future[i][j] = 0;
+                }
+            }
+        }
+        std::swap(current, future);
+    }
+#else
     void simulateNext() {
         //printCurrentGrid();
         int M = current.size();
@@ -85,6 +124,8 @@ public:
         }
         std::swap(current, future);
     }
+#endif
+
 };
 
 // Init random starting grid of the game

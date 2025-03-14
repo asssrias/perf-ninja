@@ -27,8 +27,13 @@ void multiply(Matrix &result, const Matrix &a, const Matrix &b) {
   zero(result);
 
   for (int i = 0; i < N; i++) {
+#ifdef SOLUTION
+    for (int k = 0; k < N; k++) {
+      for (int j = 0; j < N; j++) {
+#else
     for (int j = 0; j < N; j++) {
       for (int k = 0; k < N; k++) {
+#endif
         result[i][j] += a[i][k] * b[k][j];
       }
     }

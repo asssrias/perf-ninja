@@ -1,6 +1,6 @@
 #include <memory>
 #include <vector>
-
+// #define SOLUTION
 #if defined(__APPLE__) && defined(__MACH__)
   // In Apple processors (such as M1, M2 and later), L2 cache operates on 128B cache lines.
   #define ON_MACOS
@@ -35,7 +35,13 @@ using AlignedVector = std::vector<T, CacheLineAlignedAllocator<T> >;
 // ******************************************
 // hint: use AlignedVector instead of std::vector 
 //       to align the beginning of a matrix
+
+#ifdef SOLUTION
+using Matrix = AlignedVector<float>;
+#else
 using Matrix = std::vector<float>;
+#endif // SOLUTION
+
 // ******************************************
 
 static bool isCacheLineAligned(const Matrix& m) {

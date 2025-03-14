@@ -17,8 +17,11 @@ bool matrices_equal(MatrixOfDoubles &m1, MatrixOfDoubles &m2) {
   auto size = m1.size();
   for (int i = 0; i < size; i++)
     for (int j = 0; j < size; j++)
-      if (m1[i][j] != m2[i][j])
+      if (m1[i][j] != m2[i][j]) {
+        std::cerr << "i: " << i << ", j: " << j << " not equal";
         return false;
+      }
+        
 
   return true;
 }

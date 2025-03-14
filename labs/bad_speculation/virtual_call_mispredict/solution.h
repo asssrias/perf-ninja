@@ -12,19 +12,31 @@ struct BaseClass {
 };
 
 struct ClassA : public BaseClass {
+#ifdef SOLUTION
+    void handle(std::size_t& data) const override final {
+#else
     void handle(std::size_t& data) const override {
+#endif
         data += 1;
     }
 };
 
 struct ClassB : public BaseClass {
+#ifdef SOLUTION
+    void handle(std::size_t& data) const override final {
+#else
     void handle(std::size_t& data) const override {
+#endif
         data += 2;
     }
 };
 
 struct ClassC : public BaseClass {
+#ifdef SOLUTION
+    void handle(std::size_t& data) const override final {
+#else
     void handle(std::size_t& data) const override {
+#endif
         data += 3;
     }
 };
